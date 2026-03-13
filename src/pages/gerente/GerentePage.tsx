@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DashboardTab } from './components/DashboardTab'
+import { ApprovalTab } from './components/ApprovalTab'
 import { UsersTab } from './components/UsersTab'
 import { StatusTab } from './components/StatusTab'
 
@@ -17,6 +18,12 @@ export default function GerentePage() {
             Visão Geral
           </TabsTrigger>
           <TabsTrigger
+            value="approval"
+            className="data-[state=active]:bg-primary data-[state=active]:text-white"
+          >
+            Aprovações
+          </TabsTrigger>
+          <TabsTrigger
             value="users"
             className="data-[state=active]:bg-primary data-[state=active]:text-white"
           >
@@ -29,8 +36,11 @@ export default function GerentePage() {
             Configurar Status
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="dash" className="mt-0">
+        <TabsContent value="dash" className="mt-0 h-full overflow-y-auto">
           <DashboardTab />
+        </TabsContent>
+        <TabsContent value="approval" className="mt-0 h-full">
+          <ApprovalTab />
         </TabsContent>
         <TabsContent value="users" className="mt-0">
           <UsersTab />

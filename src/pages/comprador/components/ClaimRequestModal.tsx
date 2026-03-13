@@ -32,7 +32,7 @@ export function ClaimRequestModal({
   const [reqNumber, setReqNumber] = useState('')
   const [assigneeId, setAssigneeId] = useState<string>('me')
 
-  const activeBuyers = users.filter((u) => u.role === 'comprador' && u.active)
+  const activeBuyers = users.filter((u) => u.roles.includes('comprador') && u.active)
 
   const handleClaim = () => {
     if (!reqNumber) return toast.error('Informe o número da solicitação')

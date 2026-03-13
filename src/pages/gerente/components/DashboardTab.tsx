@@ -18,35 +18,46 @@ export function DashboardTab() {
   }, [requests, statuses])
 
   const totalOpen = requests.filter((r) => r.status_id !== 's6' && r.status_id !== 's7').length
-  const unassigned = requests.filter((r) => !r.buyer_id && r.status_id !== 's1').length
+  const pendingApproval = requests.filter((r) => r.status_id === 's1.5').length
+  const unassigned = requests.filter((r) => !r.buyer_id && r.status_id === 's2').length
   const delivered = requests.filter((r) => r.status_id === 's6').length
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="space-y-6 pb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-              Abertas (Em Progresso)
+            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Abertas
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-4xl font-bold text-slate-800">{totalOpen}</CardContent>
+          <CardContent className="text-3xl font-bold text-slate-800">{totalOpen}</CardContent>
         </Card>
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Aguardando Aprovação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-bold text-purple-600">
+            {pendingApproval}
+          </CardContent>
+        </Card>
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Aguardando Comprador
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-4xl font-bold text-amber-500">{unassigned}</CardContent>
+          <CardContent className="text-3xl font-bold text-amber-500">{unassigned}</CardContent>
         </Card>
         <Card className="shadow-sm border-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-              Entregues (Mês)
+            <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Entregues
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-4xl font-bold text-emerald-500">{delivered}</CardContent>
+          <CardContent className="text-3xl font-bold text-emerald-500">{delivered}</CardContent>
         </Card>
       </div>
 
@@ -64,8 +75,11 @@ export function DashboardTab() {
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748B' }}
+                    tick={{ fontSize: 10, fill: '#64748B' }}
                     dy={10}
+                    interval={0}
+                    angle={-20}
+                    textAnchor="end"
                   />
                   <YAxis
                     axisLine={false}

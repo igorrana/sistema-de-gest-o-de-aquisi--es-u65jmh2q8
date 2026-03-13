@@ -1,14 +1,29 @@
-import { Search, UserCircle } from 'lucide-react'
+import { Search, UserCircle, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import useAuthStore from '@/stores/useAuthStore'
 import useAppStore from '@/stores/useAppStore'
+import { useNavigate } from 'react-router-dom'
+import { Role } from '@/types'
 
 export function Header() {
-  const { currentUser, updateViewPreference } = useAuthStore()
+  const { currentUser, updateViewPreference, switchRole } = useAuthStore()
   const { globalSearch, setGlobalSearch } = useAppStore()
+  const navigate = useNavigate()
+
+  const handleRoleSwitch = (role: Role) => {
+    switchRole(role)
+    navigate(`/${role}`)
+  }
 
   return (
     <header className="h-16 border-b bg-white flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
@@ -39,7 +54,33 @@ export function Header() {
           <UserCircle className="h-8 w-8 text-primary" />
           <div className="hidden sm:block">
             <p className="text-sm font-medium leading-none">{currentUser?.name}</p>
-            <p className="text-xs text-muted-foreground mt-1 capitalize">{currentUser?.role}</p>
+            {currentUser && currentUser.roles.length > 1 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="h-auto p-0 mt-1 text-xs text-muted-foreground capitalize flex items-center gap-1 hover:bg-transparent"
+                  >
+                    {currentUser.current_role} <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {currentUser.roles.map((role) => (
+                    <DropdownMenuItem
+                      key={role}
+                      onClick={() => handleRoleSwitch(role)}
+                      className="capitalize"
+                    >
+                      {role}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-1 capitalize">
+                {currentUser?.current_role}
+              </p>
+            )}
           </div>
         </div>
       </div>

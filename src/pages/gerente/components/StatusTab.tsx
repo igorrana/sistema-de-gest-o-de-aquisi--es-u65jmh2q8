@@ -22,10 +22,10 @@ export function StatusTab() {
     e.preventDefault()
     if (draggedIdx === null || draggedIdx === targetIdx) return
 
-    const newStatuses = [...statuses.sort((a, b) => a.order - b.order)]
+    const newStatuses = [...statuses.sort((a, b) => a.order_index - b.order_index)]
     const [removed] = newStatuses.splice(draggedIdx, 1)
     newStatuses.splice(targetIdx, 0, removed)
-    newStatuses.forEach((s, i) => (s.order = i + 1))
+    newStatuses.forEach((s, i) => (s.order_index = i + 1))
     setStatuses(newStatuses)
     setDraggedIdx(null)
   }
@@ -34,7 +34,7 @@ export function StatusTab() {
     setStatuses((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)))
   }
 
-  const sortedStatuses = [...statuses].sort((a, b) => a.order - b.order)
+  const sortedStatuses = [...statuses].sort((a, b) => a.order_index - b.order_index)
 
   return (
     <div className="max-w-3xl border rounded-md bg-white shadow-sm">

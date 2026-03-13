@@ -5,7 +5,8 @@ import useAppStore from '@/stores/useAppStore'
 import useAuthStore from '@/stores/useAuthStore'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { Clock, User } from 'lucide-react'
+import { Clock, User, AlertCircle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface KanbanViewProps {
   requests: PurchaseRequest[]
@@ -17,8 +18,17 @@ export function KanbanView({ requests, onCardClick }: KanbanViewProps) {
   const { currentUser } = useAuthStore()
   const [draggedId, setDraggedId] = useState<string | null>(null)
 
-  const activeStatuses = statuses.filter((s) => s.active).sort((a, b) => a.order - b.order)
-  const canEditStatus = currentUser ? permissions[currentUser.role].status_id === 'edit' : false
+  let activeStatuses = statuses
+    .filter((s) => s.active)
+    .sort((a, b) => a.order_index - b.order_index)
+
+  if (currentUser?.current_role === 'solicitante') {
+    activeStatuses = activeStatuses.filter((s) => s.id !== 's1')
+  }
+
+  const canEditStatus = currentUser
+    ? permissions[currentUser.current_role].status_id === 'edit'
+    : false
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id)
@@ -50,6 +60,19 @@ export function KanbanView({ requests, onCardClick }: KanbanViewProps) {
       duration: 5000,
     })
     setDraggedId(null)
+  }
+
+  const getPriorityColor = (p: string) => {
+    switch (p) {
+      case 'P0':
+        return 'bg-red-100 text-red-800'
+      case 'P1':
+        return 'bg-orange-100 text-orange-800'
+      case 'P2':
+        return 'bg-blue-100 text-blue-800'
+      default:
+        return 'bg-slate-100 text-slate-800'
+    }
   }
 
   return (
@@ -94,20 +117,37 @@ export function KanbanView({ requests, onCardClick }: KanbanViewProps) {
                   >
                     <CardContent className="p-3">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                          {r.request_number || 'Rascunho'}
-                        </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" />{' '}
-                          {new Date(r.created_at).toLocaleDateString('pt-BR')}
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className={cn('text-[10px] px-1.5 py-0', getPriorityColor(r.priority))}
+                          >
+                            {r.priority}
+                          </Badge>
+                          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                            {r.request_number || 'S/N'}
+                          </span>
+                        </div>
+                        <span
+                          className="text-xs text-muted-foreground flex items-center gap-1"
+                          title="Data de Necessidade"
+                        >
+                          <Clock className="w-3 h-3" />
+                          {r.need_date
+                            ? new Date(r.need_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+                            : '-'}
                         </span>
                       </div>
-                      <p className="font-medium text-sm leading-tight text-slate-800 mb-3">
+                      <p className="font-medium text-sm leading-tight text-slate-800 mb-3 line-clamp-2">
                         {r.description}
                       </p>
-                      <div className="flex items-center gap-1 text-xs text-slate-500">
-                        <User className="w-3 h-3" />
-                        <span>{buyer ? buyer.name : 'Não atribuído'}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <User className="w-3 h-3" />
+                          <span className="truncate max-w-[120px]">
+                            {buyer ? buyer.name : 'Não atribuído'}
+                          </span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

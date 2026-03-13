@@ -1,12 +1,31 @@
 import React, { createContext, useState, useCallback } from 'react'
-import { User, Status, PurchaseRequest, PermissionsMap, FieldChangeLog } from '../types'
-import { MOCK_USERS, MOCK_STATUSES, MOCK_REQUESTS, MOCK_PERMISSIONS } from '../data/mock'
+import {
+  User,
+  Status,
+  PurchaseRequest,
+  PermissionsMap,
+  FieldChangeLog,
+  Project,
+  RequestType,
+  Material,
+  Role,
+} from '../types'
+import {
+  MOCK_USERS,
+  MOCK_STATUSES,
+  MOCK_REQUESTS,
+  MOCK_PERMISSIONS,
+  MOCK_PROJECTS,
+  MOCK_REQUEST_TYPES,
+  MOCK_MATERIALS,
+} from '../data/mock'
 
 export interface AuthContextType {
   currentUser: User | null
   login: (email: string, pass: string) => User | null
   logout: () => void
   updateViewPreference: (pref: 'table' | 'kanban') => void
+  switchRole: (role: Role) => void
 }
 
 export interface AppContextType {
@@ -15,13 +34,18 @@ export interface AppContextType {
   statuses: Status[]
   setStatuses: React.Dispatch<React.SetStateAction<Status[]>>
   requests: PurchaseRequest[]
+  projects: Project[]
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>
+  requestTypes: RequestType[]
+  setRequestTypes: React.Dispatch<React.SetStateAction<RequestType[]>>
+  materials: Material[]
   permissions: PermissionsMap
   setPermissions: React.Dispatch<React.SetStateAction<PermissionsMap>>
   logs: FieldChangeLog[]
   globalSearch: string
   setGlobalSearch: (s: string) => void
   updateRequest: (id: string, data: Partial<PurchaseRequest>) => void
-  addRequest: (data: Omit<PurchaseRequest, 'id' | 'created_at' | 'request_number'>) => void
+  addRequest: (data: Partial<PurchaseRequest>) => void
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -33,13 +57,16 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [statuses, setStatuses] = useState<Status[]>(MOCK_STATUSES)
   const [requests, setRequests] = useState<PurchaseRequest[]>(MOCK_REQUESTS)
+  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS)
+  const [requestTypes, setRequestTypes] = useState<RequestType[]>(MOCK_REQUEST_TYPES)
+  const [materials] = useState<Material[]>(MOCK_MATERIALS)
   const [permissions, setPermissions] = useState<PermissionsMap>(MOCK_PERMISSIONS)
   const [logs, setLogs] = useState<FieldChangeLog[]>([])
   const [globalSearch, setGlobalSearch] = useState('')
 
   const login = useCallback(
     (email: string, pass: string) => {
-      const user = users.find((u) => u.email === email && u.active)
+      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.active)
       if (user && pass) {
         setCurrentUser(user)
         return user
@@ -63,6 +90,18 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [currentUser],
   )
 
+  const switchRole = useCallback(
+    (role: Role) => {
+      if (currentUser && currentUser.roles.includes(role)) {
+        setCurrentUser({ ...currentUser, current_role: role })
+        setUsers((prev) =>
+          prev.map((u) => (u.id === currentUser.id ? { ...u, current_role: role } : u)),
+        )
+      }
+    },
+    [currentUser],
+  )
+
   const updateRequest = useCallback(
     (id: string, data: Partial<PurchaseRequest>) => {
       setRequests((prev) => {
@@ -70,6 +109,14 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!existing) return prev
 
         const updatedData = { ...data }
+
+        // Automatically assign buyer if not set and status is going beyond Approved
+        // Or if buyer_id is updated, automatically change status to 's2' if it was 's1.8'
+        if (updatedData.buyer_id && updatedData.buyer_id !== existing.buyer_id) {
+          if (!updatedData.status_id && existing.status_id === 's1.8') {
+            updatedData.status_id = 's2'
+          }
+        }
 
         if (
           'order_number' in updatedData &&
@@ -80,6 +127,10 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (existing.status_id !== 's4' && updatedData.status_id !== 's4') {
             updatedData.status_id = 's4'
           }
+        }
+
+        if (updatedData.status_id && updatedData.status_id !== existing.status_id) {
+          updatedData.status_changed_at = new Date().toISOString()
         }
 
         const newLogs: FieldChangeLog[] = []
@@ -106,22 +157,34 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [currentUser],
   )
 
-  const addRequest = useCallback(
-    (data: Omit<PurchaseRequest, 'id' | 'created_at' | 'request_number'>) => {
-      const newReq: PurchaseRequest = {
-        ...data,
-        id: Math.random().toString(36).substring(2, 9),
-        request_number: null,
-        created_at: new Date().toISOString(),
-      }
-      setRequests((prev) => [...prev, newReq])
-    },
-    [],
-  )
+  const addRequest = useCallback((data: Partial<PurchaseRequest>) => {
+    const newReq: PurchaseRequest = {
+      id: Math.random().toString(36).substring(2, 9),
+      request_number: null,
+      description: data.description || '',
+      type: data.type || 'Material',
+      project_id: data.project_id || '',
+      request_type_id: data.request_type_id || '',
+      priority: data.priority || 'P2',
+      need_date: data.need_date || null,
+      delivery_date: null,
+      status_changed_at: new Date().toISOString(),
+      is_completed: false,
+      is_delayed: false,
+      status_id: data.status_id || 's1',
+      requester_id: data.requester_id || '',
+      buyer_id: data.buyer_id || null,
+      board: null,
+      order_number: null,
+      created_at: new Date().toISOString(),
+      ...data,
+    }
+    setRequests((prev) => [...prev, newReq])
+  }, [])
 
   const authValue = React.useMemo(
-    () => ({ currentUser, login, logout, updateViewPreference }),
-    [currentUser, login, logout, updateViewPreference],
+    () => ({ currentUser, login, logout, updateViewPreference, switchRole }),
+    [currentUser, login, logout, updateViewPreference, switchRole],
   )
   const appValue = React.useMemo(
     () => ({
@@ -130,6 +193,11 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       statuses,
       setStatuses,
       requests,
+      projects,
+      setProjects,
+      requestTypes,
+      setRequestTypes,
+      materials,
       permissions,
       setPermissions,
       logs,
@@ -138,7 +206,19 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateRequest,
       addRequest,
     }),
-    [users, statuses, requests, permissions, logs, globalSearch, updateRequest, addRequest],
+    [
+      users,
+      statuses,
+      requests,
+      projects,
+      requestTypes,
+      materials,
+      permissions,
+      logs,
+      globalSearch,
+      updateRequest,
+      addRequest,
+    ],
   )
 
   return React.createElement(

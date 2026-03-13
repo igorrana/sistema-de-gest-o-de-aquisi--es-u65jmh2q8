@@ -28,6 +28,11 @@ export function PermissionsTab() {
     'request_number',
     'board',
     'order_number',
+    'project_id',
+    'request_type_id',
+    'priority',
+    'need_date',
+    'delivery_date',
   ]
 
   const handleUpdate = (role: Role, field: string, level: PermissionLevel) => {
@@ -41,7 +46,7 @@ export function PermissionsTab() {
   }
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-white overflow-hidden shadow-sm">
       <Table>
         <TableHeader className="bg-slate-50">
           <TableRow>

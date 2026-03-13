@@ -16,7 +16,7 @@ import useAuthStore from '@/stores/useAuthStore'
 import { toast } from 'sonner'
 
 export default function Index() {
-  const [email, setEmail] = useState('admin@empresa.com')
+  const [email, setEmail] = useState('admin@gmail.com')
   const [password, setPassword] = useState('123456')
   const { login } = useAuthStore()
   const navigate = useNavigate()
@@ -29,7 +29,7 @@ export default function Index() {
     }
     const user = login(email, password)
     if (user) {
-      navigate(`/${user.role}`)
+      navigate(`/${user.current_role}`)
     } else {
       toast.error('Credenciais inválidas ou usuário inativo.')
     }
@@ -78,7 +78,10 @@ export default function Index() {
               Entrar
             </Button>
             <div className="text-xs text-center text-slate-500 w-full">
-              <p>Mocks disponíveis: admin@, gerente@, solicitante@, comprador@ (senha: 123456)</p>
+              <p>
+                Mocks: admin@gmail.com, gerente@gmail.com, solicitante@gmail.com,
+                comprador@gmail.com (senha: 123456)
+              </p>
             </div>
           </CardFooter>
         </form>

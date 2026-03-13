@@ -16,7 +16,7 @@ export function AppSidebar() {
   const location = useLocation()
 
   const getLinks = () => {
-    switch (currentUser?.role) {
+    switch (currentUser?.current_role) {
       case 'admin':
         return [{ href: '/admin', label: 'Painel Admin', icon: LayoutDashboard }]
       case 'gerente':

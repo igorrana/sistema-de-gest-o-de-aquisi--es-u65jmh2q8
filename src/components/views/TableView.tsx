@@ -10,73 +10,97 @@ import { Badge } from '@/components/ui/badge'
 import { PurchaseRequest } from '@/types'
 import useAppStore from '@/stores/useAppStore'
 
-interface TableViewProps {
+export function TableView({
+  requests,
+  onRowClick,
+}: {
   requests: PurchaseRequest[]
   onRowClick: (id: string) => void
-}
+}) {
+  const { statuses, users, projects } = useAppStore()
 
-export function TableView({ requests, onRowClick }: TableViewProps) {
-  const { statuses, users } = useAppStore()
+  const getPriorityColor = (p: string) => {
+    switch (p) {
+      case 'P0':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'P1':
+        return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'P2':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      default:
+        return 'bg-slate-100 text-slate-800'
+    }
+  }
 
   return (
-    <div className="rounded-md border bg-white shadow-sm overflow-hidden h-full flex flex-col">
-      <div className="overflow-auto flex-1">
-        <Table>
-          <TableHeader className="bg-slate-50 sticky top-0 z-10 shadow-sm">
+    <div className="border rounded-md bg-white overflow-hidden shadow-sm">
+      <Table>
+        <TableHeader className="bg-slate-50">
+          <TableRow>
+            <TableHead>Prioridade</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Descrição</TableHead>
+            <TableHead>Projeto</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Necessidade</TableHead>
+            <TableHead>Comprador</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {requests.length === 0 ? (
             <TableRow>
-              <TableHead>Número</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Comprador</TableHead>
-              <TableHead>Data</TableHead>
+              <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                Nenhuma solicitação encontrada.
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {requests.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Nenhuma solicitação encontrada.
-                </TableCell>
-              </TableRow>
-            ) : (
-              requests.map((r) => {
-                const status = statuses.find((s) => s.id === r.status_id)
-                const buyer = users.find((u) => u.id === r.buyer_id)
-                return (
-                  <TableRow
-                    key={r.id}
-                    onClick={() => onRowClick(r.id)}
-                    className="cursor-pointer hover:bg-slate-50 transition-colors"
-                  >
-                    <TableCell className="font-medium">{r.request_number || 'S/N'}</TableCell>
-                    <TableCell>{r.description}</TableCell>
-                    <TableCell>{r.type}</TableCell>
-                    <TableCell>
-                      {status && (
-                        <Badge
-                          style={{ backgroundColor: status.color, color: '#fff' }}
-                          className="border-none font-normal"
-                        >
-                          {status.name}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {buyer ? (
-                        buyer.name
-                      ) : (
-                        <span className="text-muted-foreground italic">Não atribuído</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{new Date(r.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+          ) : (
+            requests.map((r) => {
+              const status = statuses.find((s) => s.id === r.status_id)
+              const buyer = users.find((u) => u.id === r.buyer_id)
+              const project = projects.find((p) => p.id === r.project_id)
+
+              return (
+                <TableRow
+                  key={r.id}
+                  className="cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => onRowClick(r.id)}
+                >
+                  <TableCell>
+                    <Badge variant="outline" className={getPriorityColor(r.priority)}>
+                      {r.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium text-slate-600">
+                    {r.request_number || 'S/N'}
+                  </TableCell>
+                  <TableCell className="font-medium text-slate-800">{r.description}</TableCell>
+                  <TableCell className="text-slate-600 truncate max-w-[150px]">
+                    {project?.name || 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      style={{
+                        backgroundColor: `${status?.color}15`,
+                        color: status?.color,
+                        borderColor: `${status?.color}30`,
+                      }}
+                    >
+                      {status?.name || 'Desconhecido'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {r.need_date
+                      ? new Date(r.need_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+                      : '-'}
+                  </TableCell>
+                  <TableCell className="text-slate-600">{buyer?.name || 'Não atribuído'}</TableCell>
+                </TableRow>
+              )
+            })
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

@@ -13,6 +13,7 @@ export default function SolicitantePage() {
   const { requests } = useAppStore()
   const { currentUser } = useAuthStore()
 
+  // RLS Simulation: own requests + requests without request_number
   const myRequests = requests.filter((r) => r.requester_id === currentUser?.id || !r.request_number)
 
   return (

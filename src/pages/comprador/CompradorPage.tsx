@@ -14,11 +14,12 @@ export default function CompradorPage() {
   const { requests } = useAppStore()
   const { currentUser } = useAuthStore()
 
+  // RLS Simulation: Assigned + unassigned waiting for buyer (s2)
   const myAssigned = requests.filter((r) => r.buyer_id === currentUser?.id)
-  const unassigned = requests.filter((r) => !r.buyer_id && r.status_id !== 's1') // Ignora rascunhos
+  const unassigned = requests.filter((r) => !r.buyer_id && r.status_id === 's2')
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-slate-800">Workspace do Comprador</h1>
         <Button
