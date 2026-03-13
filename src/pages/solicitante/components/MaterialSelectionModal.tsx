@@ -57,7 +57,8 @@ export function MaterialSelectionModal({
   }
 
   const handleCreate = () => {
-    if (!name || !description || !type || !unit || !ncm) return
+    if (!name || !description || !type || !unit) return
+    if (type === 'Material' && !ncm) return
     const newMat = addMaterial({ name, description, type, unit, ncm })
     onSelect(newMat)
     onOpenChange(false)
@@ -110,7 +111,15 @@ export function MaterialSelectionModal({
                 <Label>
                   Tipo <span className="text-red-500">*</span>
                 </Label>
-                <Select value={type} onValueChange={(v: any) => setType(v)}>
+                <Select
+                  value={type}
+                  onValueChange={(v: any) => {
+                    setType(v)
+                    if (v === 'Serviço') {
+                      setNcm('')
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -131,13 +140,12 @@ export function MaterialSelectionModal({
                 />
               </div>
               <div className="space-y-2">
-                <Label>
-                  NCM <span className="text-red-500">*</span>
-                </Label>
+                <Label>NCM {type === 'Material' && <span className="text-red-500">*</span>}</Label>
                 <Input
                   value={ncm}
                   onChange={(e) => setNcm(e.target.value)}
                   placeholder="Ex: 8501.52.10"
+                  disabled={type === 'Serviço'}
                 />
               </div>
             </div>
