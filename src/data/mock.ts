@@ -79,6 +79,7 @@ export const MOCK_REQUEST_TYPES: RequestType[] = [
   {
     id: 'rt1',
     name: 'Compra de Material',
+    description: 'Solicitações focadas na aquisição de itens e materiais físicos.',
     default_buyer_id: 'u4',
     is_active: true,
     created_at: new Date().toISOString(),
@@ -86,6 +87,7 @@ export const MOCK_REQUEST_TYPES: RequestType[] = [
   {
     id: 'rt2',
     name: 'Contratação de Serviço',
+    description: 'Solicitações para contratação de empresas ou profissionais terceirizados.',
     default_buyer_id: null,
     is_active: true,
     created_at: new Date().toISOString(),

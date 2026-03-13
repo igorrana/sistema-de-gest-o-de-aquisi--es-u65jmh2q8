@@ -22,6 +22,7 @@ export interface Project {
 export interface RequestType {
   id: string
   name: string
+  description: string
   default_buyer_id: string | null
   is_active: boolean
   created_at: string

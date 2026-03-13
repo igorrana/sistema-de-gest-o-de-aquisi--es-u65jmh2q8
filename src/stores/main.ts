@@ -48,6 +48,8 @@ export interface AppContextType {
   updateRequest: (id: string, data: Partial<PurchaseRequest>) => void
   addRequest: (data: Partial<PurchaseRequest>) => void
   addMaterial: (data: Partial<Material>) => Material
+  addRequestType: (data: Partial<RequestType>) => void
+  updateRequestType: (id: string, data: Partial<RequestType>) => void
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -146,30 +148,42 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [currentUser],
   )
 
-  const addRequest = useCallback((data: Partial<PurchaseRequest>) => {
-    const newReq: PurchaseRequest = {
-      id: Math.random().toString(36).substring(2, 9),
-      request_number: null,
-      description: data.description || '',
-      type: data.type || 'Material',
-      project_id: data.project_id || '',
-      request_type_id: data.request_type_id || '',
-      priority: data.priority || 'P2',
-      need_date: data.need_date || null,
-      delivery_date: null,
-      status_changed_at: new Date().toISOString(),
-      is_completed: false,
-      is_delayed: false,
-      status_id: data.status_id || 's1',
-      requester_id: data.requester_id || '',
-      buyer_id: data.buyer_id || null,
-      board: null,
-      order_number: null,
-      created_at: new Date().toISOString(),
-      ...data,
-    }
-    setRequests((prev) => [...prev, newReq])
-  }, [])
+  const addRequest = useCallback(
+    (data: Partial<PurchaseRequest>) => {
+      let defaultBuyerId = data.buyer_id || null
+
+      if (!defaultBuyerId && data.request_type_id) {
+        const rt = requestTypes.find((r) => r.id === data.request_type_id)
+        if (rt && rt.default_buyer_id) {
+          defaultBuyerId = rt.default_buyer_id
+        }
+      }
+
+      const newReq: PurchaseRequest = {
+        id: Math.random().toString(36).substring(2, 9),
+        request_number: null,
+        description: data.description || '',
+        type: data.type || 'Material',
+        project_id: data.project_id || '',
+        request_type_id: data.request_type_id || '',
+        priority: data.priority || 'P2',
+        need_date: data.need_date || null,
+        delivery_date: null,
+        status_changed_at: new Date().toISOString(),
+        is_completed: false,
+        is_delayed: false,
+        status_id: data.status_id || 's1',
+        requester_id: data.requester_id || '',
+        buyer_id: defaultBuyerId,
+        board: null,
+        order_number: null,
+        created_at: new Date().toISOString(),
+        ...data,
+      }
+      setRequests((prev) => [...prev, newReq])
+    },
+    [requestTypes],
+  )
 
   const addMaterial = useCallback(
     (data: Partial<Material>) => {
@@ -194,6 +208,22 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     [currentUser],
   )
+
+  const addRequestType = useCallback((data: Partial<RequestType>) => {
+    const newType: RequestType = {
+      id: Math.random().toString(36).substring(2, 9),
+      name: data.name || '',
+      description: data.description || '',
+      default_buyer_id: data.default_buyer_id || null,
+      is_active: data.is_active ?? true,
+      created_at: new Date().toISOString(),
+    }
+    setRequestTypes((prev) => [...prev, newType])
+  }, [])
+
+  const updateRequestType = useCallback((id: string, data: Partial<RequestType>) => {
+    setRequestTypes((prev) => prev.map((rt) => (rt.id === id ? { ...rt, ...data } : rt)))
+  }, [])
 
   const authValue = React.useMemo(
     () => ({ currentUser, login, logout, updateViewPreference, switchRole }),
@@ -220,6 +250,8 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateRequest,
       addRequest,
       addMaterial,
+      addRequestType,
+      updateRequestType,
     }),
     [
       users,
@@ -234,6 +266,8 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateRequest,
       addRequest,
       addMaterial,
+      addRequestType,
+      updateRequestType,
     ],
   )
 
