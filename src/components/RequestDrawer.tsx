@@ -42,8 +42,21 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
     .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())
 
   const handleSave = () => {
+    const isOrderNumberAddedOrChanged =
+      formData.order_number &&
+      String(formData.order_number).trim() !== '' &&
+      formData.order_number !== req.order_number
+
+    const willUpdateStatus =
+      isOrderNumberAddedOrChanged && req.status_id !== 's4' && formData.status_id !== 's4'
+
     updateRequest(req.id, formData)
-    toast.success('Solicitação atualizada com sucesso')
+
+    if (willUpdateStatus) {
+      toast.success('Número do pedido salvo e status atualizado para Pedido Realizado')
+    } else {
+      toast.success('Solicitação atualizada com sucesso')
+    }
     onClose()
   }
 

@@ -69,16 +69,29 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const existing = prev.find((r) => r.id === id)
         if (!existing) return prev
 
+        const updatedData = { ...data }
+
+        if (
+          'order_number' in updatedData &&
+          updatedData.order_number &&
+          String(updatedData.order_number).trim() !== '' &&
+          updatedData.order_number !== existing.order_number
+        ) {
+          if (existing.status_id !== 's4' && updatedData.status_id !== 's4') {
+            updatedData.status_id = 's4'
+          }
+        }
+
         const newLogs: FieldChangeLog[] = []
-        Object.keys(data).forEach((key) => {
+        Object.keys(updatedData).forEach((key) => {
           const k = key as keyof PurchaseRequest
-          if (existing[k] !== data[k]) {
+          if (existing[k] !== updatedData[k]) {
             newLogs.push({
-              id: Math.random().toString(),
+              id: Math.random().toString(36).substring(2, 9),
               request_id: id,
               field: key,
               old_value: String(existing[k] || ''),
-              new_value: String(data[k] || ''),
+              new_value: String(updatedData[k] || ''),
               changed_by: currentUser?.name || 'Sistema',
               changed_at: new Date().toISOString(),
             })
@@ -87,7 +100,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (newLogs.length > 0) {
           setLogs((l) => [...newLogs, ...l])
         }
-        return prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+        return prev.map((r) => (r.id === id ? { ...r, ...updatedData } : r))
       })
     },
     [currentUser],
@@ -97,7 +110,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     (data: Omit<PurchaseRequest, 'id' | 'created_at' | 'request_number'>) => {
       const newReq: PurchaseRequest = {
         ...data,
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 9),
         request_number: null,
         created_at: new Date().toISOString(),
       }
