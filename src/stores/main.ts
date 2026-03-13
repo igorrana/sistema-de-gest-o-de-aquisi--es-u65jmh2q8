@@ -39,6 +39,7 @@ export interface AppContextType {
   requestTypes: RequestType[]
   setRequestTypes: React.Dispatch<React.SetStateAction<RequestType[]>>
   materials: Material[]
+  setMaterials: React.Dispatch<React.SetStateAction<Material[]>>
   permissions: PermissionsMap
   setPermissions: React.Dispatch<React.SetStateAction<PermissionsMap>>
   logs: FieldChangeLog[]
@@ -46,6 +47,7 @@ export interface AppContextType {
   setGlobalSearch: (s: string) => void
   updateRequest: (id: string, data: Partial<PurchaseRequest>) => void
   addRequest: (data: Partial<PurchaseRequest>) => void
+  addMaterial: (data: Partial<Material>) => Material
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -54,12 +56,11 @@ export const AppContext = createContext<AppContextType | null>(null)
 export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [users, setUsers] = useState<User[]>(MOCK_USERS)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-
   const [statuses, setStatuses] = useState<Status[]>(MOCK_STATUSES)
   const [requests, setRequests] = useState<PurchaseRequest[]>(MOCK_REQUESTS)
   const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS)
   const [requestTypes, setRequestTypes] = useState<RequestType[]>(MOCK_REQUEST_TYPES)
-  const [materials] = useState<Material[]>(MOCK_MATERIALS)
+  const [materials, setMaterials] = useState<Material[]>(MOCK_MATERIALS)
   const [permissions, setPermissions] = useState<PermissionsMap>(MOCK_PERMISSIONS)
   const [logs, setLogs] = useState<FieldChangeLog[]>([])
   const [globalSearch, setGlobalSearch] = useState('')
@@ -107,32 +108,22 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRequests((prev) => {
         const existing = prev.find((r) => r.id === id)
         if (!existing) return prev
-
         const updatedData = { ...data }
-
-        // Automatically assign buyer if not set and status is going beyond Approved
-        // Or if buyer_id is updated, automatically change status to 's2' if it was 's1.8'
         if (updatedData.buyer_id && updatedData.buyer_id !== existing.buyer_id) {
-          if (!updatedData.status_id && existing.status_id === 's1.8') {
-            updatedData.status_id = 's2'
-          }
+          if (!updatedData.status_id && existing.status_id === 's1.8') updatedData.status_id = 's2'
         }
-
         if (
           'order_number' in updatedData &&
           updatedData.order_number &&
           String(updatedData.order_number).trim() !== '' &&
           updatedData.order_number !== existing.order_number
         ) {
-          if (existing.status_id !== 's4' && updatedData.status_id !== 's4') {
+          if (existing.status_id !== 's4' && updatedData.status_id !== 's4')
             updatedData.status_id = 's4'
-          }
         }
-
         if (updatedData.status_id && updatedData.status_id !== existing.status_id) {
           updatedData.status_changed_at = new Date().toISOString()
         }
-
         const newLogs: FieldChangeLog[] = []
         Object.keys(updatedData).forEach((key) => {
           const k = key as keyof PurchaseRequest
@@ -148,9 +139,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
             })
           }
         })
-        if (newLogs.length > 0) {
-          setLogs((l) => [...newLogs, ...l])
-        }
+        if (newLogs.length > 0) setLogs((l) => [...newLogs, ...l])
         return prev.map((r) => (r.id === id ? { ...r, ...updatedData } : r))
       })
     },
@@ -182,6 +171,30 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRequests((prev) => [...prev, newReq])
   }, [])
 
+  const addMaterial = useCallback(
+    (data: Partial<Material>) => {
+      const newMat: Material = {
+        id: Math.random().toString(36).substring(2, 9),
+        custom_code: data.custom_code || '',
+        system_code: data.system_code || '',
+        name: data.name || '',
+        description: data.description || '',
+        type: data.type || 'Material',
+        unit: data.unit || 'un',
+        ncm: data.ncm || '',
+        fab_exclusivo: data.fab_exclusivo || 'NÃO',
+        obra: data.obra || 'Geral',
+        local_de_aplicacao: data.local_de_aplicacao || 'Geral',
+        created_by: currentUser?.id || 'Sistema',
+        created_at: new Date().toISOString(),
+        ...data,
+      }
+      setMaterials((prev) => [...prev, newMat])
+      return newMat
+    },
+    [currentUser],
+  )
+
   const authValue = React.useMemo(
     () => ({ currentUser, login, logout, updateViewPreference, switchRole }),
     [currentUser, login, logout, updateViewPreference, switchRole],
@@ -198,6 +211,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       requestTypes,
       setRequestTypes,
       materials,
+      setMaterials,
       permissions,
       setPermissions,
       logs,
@@ -205,6 +219,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setGlobalSearch,
       updateRequest,
       addRequest,
+      addMaterial,
     }),
     [
       users,
@@ -218,6 +233,7 @@ export const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children
       globalSearch,
       updateRequest,
       addRequest,
+      addMaterial,
     ],
   )
 

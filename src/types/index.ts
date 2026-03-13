@@ -51,6 +51,12 @@ export interface Status {
   active: boolean
 }
 
+export interface PurchaseRequestItem {
+  id: string
+  material_id: string
+  quantity: number
+}
+
 export interface PurchaseRequest {
   id: string
   request_number: string | null
@@ -70,6 +76,7 @@ export interface PurchaseRequest {
   board: string | null
   order_number: string | null
   created_at: string
+  items?: PurchaseRequestItem[]
 }
 
 export interface FieldChangeLog {
