@@ -50,6 +50,7 @@ export interface Status {
   color: string
   order_index: number
   active: boolean
+  max_days?: number | null
 }
 
 export interface PurchaseRequestItem {

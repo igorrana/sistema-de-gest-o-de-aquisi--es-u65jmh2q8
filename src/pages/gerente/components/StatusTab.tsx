@@ -37,13 +37,14 @@ export function StatusTab() {
   const sortedStatuses = [...statuses].sort((a, b) => a.order_index - b.order_index)
 
   return (
-    <div className="max-w-3xl border rounded-md bg-white shadow-sm">
+    <div className="max-w-4xl border rounded-md bg-white shadow-sm">
       <Table>
         <TableHeader className="bg-slate-50">
           <TableRow>
             <TableHead className="w-12"></TableHead>
             <TableHead>Nome do Status</TableHead>
             <TableHead className="w-32">Cor</TableHead>
+            <TableHead className="w-28 text-center">Prazo (dias)</TableHead>
             <TableHead className="w-24 text-center">Ativo</TableHead>
           </TableRow>
         </TableHeader>
@@ -71,6 +72,19 @@ export function StatusTab() {
                   />
                   <span className="text-xs text-muted-foreground uppercase">{s.color}</span>
                 </div>
+              </TableCell>
+              <TableCell className="text-center">
+                <Input
+                  type="number"
+                  min="0"
+                  value={s.max_days ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    updateStatus(s.id, { max_days: val === '' ? null : parseInt(val, 10) })
+                  }}
+                  className="w-20 mx-auto text-center px-2 border-slate-200 focus-visible:ring-1"
+                  placeholder="-"
+                />
               </TableCell>
               <TableCell className="text-center">
                 <Switch

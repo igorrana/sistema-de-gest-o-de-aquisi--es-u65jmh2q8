@@ -17,6 +17,7 @@ import useAppStore from '@/stores/useAppStore'
 import useAuthStore from '@/stores/useAuthStore'
 import { PurchaseRequest } from '@/types'
 import { Badge } from '@/components/ui/badge'
+import { calculateDeadlineDays } from '@/lib/utils'
 
 interface RequestDrawerProps {
   requestId: string | null
@@ -49,6 +50,9 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
         r.id !== req.id &&
         r.request_number?.trim().toLowerCase() === formData.request_number?.trim().toLowerCase(),
     )
+
+  const currentStatus = statuses.find((s) => s.id === formData.status_id)
+  const diffDays = calculateDeadlineDays(formData.status_changed_at, currentStatus?.max_days)
 
   const handleSave = () => {
     if (isDuplicateId) {
@@ -131,7 +135,26 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <div className="flex justify-between items-center">
+                    <Label>Status</Label>
+                    {diffDays !== null && (
+                      <span
+                        className={`text-xs font-semibold ${
+                          diffDays < 0
+                            ? 'text-destructive'
+                            : diffDays === 0
+                              ? 'text-amber-600'
+                              : 'text-slate-500'
+                        }`}
+                      >
+                        {diffDays < 0
+                          ? `Vencido (${Math.abs(diffDays)}d)`
+                          : diffDays === 0
+                            ? 'Vence hoje'
+                            : `${diffDays}d restantes`}
+                      </span>
+                    )}
+                  </div>
                   <Select
                     disabled={!canEdit('status_id')}
                     value={formData.status_id}

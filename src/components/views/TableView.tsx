@@ -9,6 +9,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { PurchaseRequest } from '@/types'
 import useAppStore from '@/stores/useAppStore'
+import { calculateDeadlineDays } from '@/lib/utils'
 
 export function TableView({
   requests,
@@ -42,6 +43,7 @@ export function TableView({
             <TableHead>Descrição</TableHead>
             <TableHead>Projeto</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Prazo</TableHead>
             <TableHead>Necessidade</TableHead>
             <TableHead>Comprador</TableHead>
           </TableRow>
@@ -49,7 +51,7 @@ export function TableView({
         <TableBody>
           {requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
                 Nenhuma solicitação encontrada.
               </TableCell>
             </TableRow>
@@ -58,6 +60,7 @@ export function TableView({
               const status = statuses.find((s) => s.id === r.status_id)
               const buyer = users.find((u) => u.id === r.buyer_id)
               const project = projects.find((p) => p.id === r.project_id)
+              const diffDays = calculateDeadlineDays(r.status_changed_at, status?.max_days)
 
               return (
                 <TableRow
@@ -88,6 +91,24 @@ export function TableView({
                     >
                       {status?.name || 'Desconhecido'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {diffDays === null ? (
+                      <span className="text-muted-foreground">-</span>
+                    ) : diffDays < 0 ? (
+                      <Badge variant="destructive">Vencido ({-diffDays}d)</Badge>
+                    ) : diffDays === 0 ? (
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-300 bg-amber-50"
+                      >
+                        Vence hoje
+                      </Badge>
+                    ) : (
+                      <span className="text-slate-600 font-medium">
+                        {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-slate-600">
                     {r.need_date
