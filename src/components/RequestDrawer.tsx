@@ -166,7 +166,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Número da Solicitação (ERP)</Label>
+                  <Label>ID da Solicitação</Label>
                   <Input
                     value={formData.request_number || ''}
                     onChange={(e) => setFormData({ ...formData, request_number: e.target.value })}

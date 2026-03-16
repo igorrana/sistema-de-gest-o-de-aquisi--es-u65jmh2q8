@@ -355,7 +355,7 @@ export const MOCK_PERMISSIONS: PermissionsMap = {
     is_delayed: 'read',
     status_id: 'read',
     buyer_id: 'read',
-    request_number: 'none',
+    request_number: 'edit',
     board: 'read',
     order_number: 'read',
   },

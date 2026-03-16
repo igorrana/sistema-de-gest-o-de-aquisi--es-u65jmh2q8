@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -45,9 +45,10 @@ export function NewRequestModal({
   open: boolean
   onOpenChange: (o: boolean) => void
 }) {
-  const { addRequest, projects, requestTypes } = useAppStore()
+  const { addRequest, projects, requestTypes, requests } = useAppStore()
   const { currentUser } = useAuthStore()
 
+  const [reqNumber, setReqNumber] = useState('')
   const [desc, setDesc] = useState('')
   const [projectId, setProjectId] = useState('')
   const [reqTypeId, setReqTypeId] = useState('')
@@ -59,8 +60,22 @@ export function NewRequestModal({
   const activeProjects = projects.filter((p) => p.is_active)
   const activeReqTypes = requestTypes.filter((rt) => rt.is_active)
 
+  // Generate suggested ID when modal opens
+  useEffect(() => {
+    if (open) {
+      const existingNumbers = requests
+        .map((r) => r.request_number)
+        .filter(Boolean)
+        .map((n) => parseInt(String(n).replace(/\D/g, ''), 10))
+        .filter((n) => !isNaN(n))
+
+      const max = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0
+      setReqNumber(`REQ-${String(max + 1).padStart(3, '0')}`)
+    }
+  }, [open]) // Intentionally not including requests to avoid overriding user edits mid-flight
+
   const handleSave = (statusId: string) => {
-    if (!desc || !projectId || !reqTypeId || !priority || !needDate || !currentUser) {
+    if (!desc || !projectId || !reqTypeId || !priority || !needDate || !currentUser || !reqNumber) {
       return toast.error('Preencha todos os campos obrigatórios do cabeçalho')
     }
     const validItems = items.filter((i) => i.material !== null)
@@ -74,6 +89,7 @@ export function NewRequestModal({
     const mainType = validItems[0].material?.type || 'Material'
 
     addRequest({
+      request_number: reqNumber,
       description: desc,
       type: mainType as 'Material' | 'Serviço',
       project_id: projectId,
@@ -98,6 +114,7 @@ export function NewRequestModal({
   }
 
   const resetForm = () => {
+    setReqNumber('')
     setDesc('')
     setProjectId('')
     setReqTypeId('')
@@ -137,15 +154,24 @@ export function NewRequestModal({
             <div className="bg-white p-5 rounded-lg border shadow-sm space-y-4">
               <h3 className="font-semibold text-[#1E40AF] border-b pb-2">Informações Gerais</h3>
               <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-4 space-y-2">
+                <div className="col-span-2 space-y-2">
+                  <Label>
+                    ID da Solicitação <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    value={reqNumber}
+                    onChange={(e) => setReqNumber(e.target.value)}
+                    placeholder="Ex: REQ-001"
+                  />
+                </div>
+                <div className="col-span-2 space-y-2">
                   <Label>
                     Descrição Geral <span className="text-red-500">*</span>
                   </Label>
-                  <Textarea
+                  <Input
                     value={desc}
                     onChange={(e) => setDesc(e.target.value)}
-                    placeholder="Ex: Aquisição de materiais para montagem..."
-                    className="h-16"
+                    placeholder="Ex: Aquisição de materiais..."
                   />
                 </div>
                 <div className="col-span-2 space-y-2">
