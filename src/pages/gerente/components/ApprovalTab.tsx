@@ -9,17 +9,27 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { CheckCircle2, XCircle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import useAppStore from '@/stores/useAppStore'
 import { RequestDrawer } from '@/components/RequestDrawer'
 
 export function ApprovalTab() {
-  const { requests, projects, users, updateRequest } = useAppStore()
+  const { requests, projects, users, updateRequest, globalSearch, setGlobalSearch } = useAppStore()
   const [selectedReq, setSelectedReq] = useState<string | null>(null)
 
   // Em Aprovação -> s1.5
-  const pendingRequests = requests.filter((r) => r.status_id === 's1.5')
+  let pendingRequests = requests.filter((r) => r.status_id === 's1.5')
+
+  if (globalSearch) {
+    const lower = globalSearch.toLowerCase()
+    pendingRequests = pendingRequests.filter(
+      (r) =>
+        (r.request_number && r.request_number.toLowerCase().includes(lower)) ||
+        r.description.toLowerCase().includes(lower),
+    )
+  }
 
   const handleApprove = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -47,6 +57,15 @@ export function ApprovalTab() {
     <div className="space-y-4 h-full flex flex-col">
       <div className="flex justify-between items-center shrink-0">
         <h3 className="text-lg font-medium">Solicitações em Aprovação</h3>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por ID..."
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="pl-8 w-64 bg-white shadow-sm"
+          />
+        </div>
       </div>
 
       <div className="border rounded-md bg-white flex-1 overflow-auto shadow-sm">

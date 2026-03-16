@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ViewRenderer } from '@/components/views/ViewRenderer'
 import { RequestDrawer } from '@/components/RequestDrawer'
@@ -11,7 +12,7 @@ import useAuthStore from '@/stores/useAuthStore'
 export default function CompradorPage() {
   const [selectedReq, setSelectedReq] = useState<string | null>(null)
   const [claimOpen, setClaimOpen] = useState(false)
-  const { requests } = useAppStore()
+  const { requests, globalSearch, setGlobalSearch } = useAppStore()
   const { currentUser } = useAuthStore()
 
   // RLS Simulation: Assigned + unassigned waiting for buyer (s2)
@@ -22,12 +23,23 @@ export default function CompradorPage() {
     <div className="h-full flex flex-col max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6 shrink-0">
         <h1 className="text-2xl font-bold text-slate-800">Workspace do Comprador</h1>
-        <Button
-          onClick={() => setClaimOpen(true)}
-          className="shadow-sm bg-primary hover:bg-primary/90"
-        >
-          <Search className="mr-2 h-4 w-4" /> Resgatar Solicitação
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por ID..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="pl-8 w-64 bg-white shadow-sm border-slate-200"
+            />
+          </div>
+          <Button
+            onClick={() => setClaimOpen(true)}
+            className="shadow-sm bg-primary hover:bg-primary/90"
+          >
+            <Search className="mr-2 h-4 w-4" /> Resgatar Solicitação
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="mine" className="flex-1 flex flex-col min-h-0">

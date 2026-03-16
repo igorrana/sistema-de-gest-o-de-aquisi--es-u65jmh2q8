@@ -42,7 +42,19 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
     .filter((l) => l.request_id === req.id)
     .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())
 
+  const isDuplicateId =
+    !!formData.request_number?.trim() &&
+    requests.some(
+      (r) =>
+        r.id !== req.id &&
+        r.request_number?.trim().toLowerCase() === formData.request_number?.trim().toLowerCase(),
+    )
+
   const handleSave = () => {
+    if (isDuplicateId) {
+      return toast.error('Não é possível salvar. Este ID já existe no sistema.')
+    }
+
     // Comprador Logic: Mandatory Delivery Date on Pedido Realizado
     if (currentUser.current_role === 'comprador') {
       const isCompletingOrder =
@@ -171,7 +183,13 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                     value={formData.request_number || ''}
                     onChange={(e) => setFormData({ ...formData, request_number: e.target.value })}
                     disabled={!canEdit('request_number')}
+                    className={isDuplicateId ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
+                  {isDuplicateId && (
+                    <p className="text-xs text-red-500 font-medium">
+                      Este ID já existe no sistema. Por favor, utilize uma numeração diferente.
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

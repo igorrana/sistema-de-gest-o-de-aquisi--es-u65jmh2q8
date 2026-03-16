@@ -72,9 +72,16 @@ export function NewRequestModal({
       const max = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0
       setReqNumber(`REQ-${String(max + 1).padStart(3, '0')}`)
     }
-  }, [open]) // Intentionally not including requests to avoid overriding user edits mid-flight
+  }, [open])
+
+  const isDuplicateId =
+    reqNumber.trim() !== '' &&
+    requests.some((r) => r.request_number?.trim().toLowerCase() === reqNumber.trim().toLowerCase())
 
   const handleSave = (statusId: string) => {
+    if (isDuplicateId) {
+      return toast.error('Não é possível salvar. Este ID já existe no sistema.')
+    }
     if (!desc || !projectId || !reqTypeId || !priority || !needDate || !currentUser || !reqNumber) {
       return toast.error('Preencha todos os campos obrigatórios do cabeçalho')
     }
@@ -162,7 +169,13 @@ export function NewRequestModal({
                     value={reqNumber}
                     onChange={(e) => setReqNumber(e.target.value)}
                     placeholder="Ex: REQ-001"
+                    className={isDuplicateId ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
+                  {isDuplicateId && (
+                    <p className="text-xs text-red-500 font-medium">
+                      Este ID já existe no sistema. Por favor, utilize uma numeração diferente.
+                    </p>
+                  )}
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label>
