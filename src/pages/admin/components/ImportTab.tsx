@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { AlertCircle, ArrowLeft, Save, FileSpreadsheet } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Save, FileSpreadsheet, Loader2 } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -23,47 +23,7 @@ import { Label } from '@/components/ui/label'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
-
-function parseCSV(text: string) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim())
-  if (lines.length < 1) return { headers: [], data: [] }
-
-  const parseLine = (line: string) => {
-    const result = []
-    let cell = ''
-    let inQuotes = false
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i]
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          cell += '"'
-          i++
-        } else {
-          inQuotes = !inQuotes
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(cell)
-        cell = ''
-      } else {
-        cell += char
-      }
-    }
-    result.push(cell)
-    return result
-  }
-
-  const headers = parseLine(lines[0]).map((h) => h.trim())
-  const data = lines.slice(1).map((line) => {
-    const values = parseLine(line)
-    const row: Record<string, string> = {}
-    headers.forEach((h, i) => {
-      row[h] = values[i]?.trim() || ''
-    })
-    return row
-  })
-
-  return { headers, data }
-}
+import { parseCSV, parseExcelFile } from '@/lib/file-parser'
 
 const SYSTEM_FIELDS = [
   { id: 'request_number', label: 'ID da Solicitação', required: true },
@@ -81,35 +41,49 @@ export function ImportTab() {
   const [rawData, setRawData] = useState<any[]>([])
   const [mapping, setMapping] = useState<Record<string, string>>({})
   const [groups, setGroups] = useState<any[]>([])
+  const [isParsing, setIsParsing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      toast.error(
-        'Por favor, faça o upload de um arquivo .csv válido. (Salve sua planilha Excel como CSV)',
-      )
+    const name = file.name.toLowerCase()
+    const isCSV = name.endsWith('.csv')
+    const isExcel = name.endsWith('.xlsx') || name.endsWith('.xls')
+
+    if (!isCSV && !isExcel) {
+      toast.error('Por favor, faça o upload de um arquivo .csv, .xlsx ou .xls.')
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const text = event.target?.result as string
-      const { headers: parsedHeaders, data } = parseCSV(text)
+    setIsParsing(true)
+    try {
+      let parsedHeaders: string[] = []
+      let parsedData: any[] = []
 
-      if (parsedHeaders.length === 0 || data.length === 0) {
+      if (isCSV) {
+        const text = await file.text()
+        const result = parseCSV(text)
+        parsedHeaders = result.headers
+        parsedData = result.data
+      } else {
+        const result = await parseExcelFile(file)
+        parsedHeaders = result.headers
+        parsedData = result.data
+      }
+
+      if (parsedHeaders.length === 0 || parsedData.length === 0) {
         toast.error('Arquivo vazio ou formato inválido.')
         if (fileInputRef.current) fileInputRef.current.value = ''
         return
       }
 
       setHeaders(parsedHeaders)
-      setRawData(data)
+      setRawData(parsedData)
 
       const autoMap: Record<string, string> = {}
       parsedHeaders.forEach((h) => {
@@ -123,8 +97,15 @@ export function ImportTab() {
       })
       setMapping(autoMap)
       setStep('mapping')
+    } catch (error) {
+      console.error('Parse error:', error)
+      toast.error(
+        'Erro ao ler o arquivo. Verifique se o formato está correto e não está corrompido.',
+      )
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    } finally {
+      setIsParsing(false)
     }
-    reader.readAsText(file, 'utf-8')
   }
 
   const handleGroup = () => {
@@ -299,20 +280,26 @@ export function ImportTab() {
         <Card className="border-dashed border-2">
           <CardContent className="flex flex-col items-center justify-center p-12 text-center">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <FileSpreadsheet className="h-8 w-8 text-primary" />
+              {isParsing ? (
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              ) : (
+                <FileSpreadsheet className="h-8 w-8 text-primary" />
+              )}
             </div>
-            <h3 className="text-xl font-semibold mb-2">Importar planilha (CSV)</h3>
+            <h3 className="text-xl font-semibold mb-2">Importar planilha (Excel ou CSV)</h3>
             <p className="text-sm text-muted-foreground mb-8 max-w-md">
-              Selecione um arquivo .csv contendo as solicitações. O sistema identificará
-              automaticamente solicitações com múltiplos itens através do ID da Solicitação.
+              Selecione um arquivo .xlsx, .xls ou .csv contendo as solicitações. O sistema
+              identificará automaticamente solicitações com múltiplos itens através do ID da
+              Solicitação.
             </p>
             <div className="flex gap-4 items-center">
               <Input
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 className="max-w-xs cursor-pointer"
                 onChange={handleFileUpload}
                 ref={fileInputRef}
+                disabled={isParsing}
               />
             </div>
           </CardContent>
@@ -391,7 +378,11 @@ export function ImportTab() {
                 disabled={isImporting}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                <Save className="w-4 h-4 mr-2" />
+                {isImporting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
                 {isImporting ? 'Importando...' : 'Confirmar Importação'}
               </Button>
             </div>
