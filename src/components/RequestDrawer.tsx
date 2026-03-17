@@ -18,6 +18,7 @@ import useAuthStore from '@/stores/useAuthStore'
 import { PurchaseRequest } from '@/types'
 import { Badge } from '@/components/ui/badge'
 import { calculateDeadlineDays } from '@/lib/utils'
+import { RequestItemsTab } from './RequestItemsTab'
 
 interface RequestDrawerProps {
   requestId: string | null
@@ -55,11 +56,8 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
   const diffDays = calculateDeadlineDays(formData.status_changed_at, currentStatus?.max_days)
 
   const handleSave = () => {
-    if (isDuplicateId) {
-      return toast.error('Não é possível salvar. Este ID já existe no sistema.')
-    }
+    if (isDuplicateId) return toast.error('Não é possível salvar. Este ID já existe no sistema.')
 
-    // Comprador Logic: Mandatory Delivery Date on Pedido Realizado
     if (currentUser.current_role === 'comprador') {
       const isCompletingOrder =
         formData.status_id === 's4' ||
@@ -69,13 +67,12 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
       }
     }
 
-    const isOrderNumberAddedOrChanged =
+    const isOrderNumberAdded =
       formData.order_number &&
       String(formData.order_number).trim() !== '' &&
       formData.order_number !== req.order_number
-
     const willUpdateStatus =
-      isOrderNumberAddedOrChanged && req.status_id !== 's4' && formData.status_id !== 's4'
+      isOrderNumberAdded && req.status_id !== 's4' && formData.status_id !== 's4'
 
     updateRequest(req.id, formData)
 
@@ -89,7 +86,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
 
   return (
     <Sheet open={!!requestId} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col gap-0 p-0 border-l-0 shadow-2xl">
+      <SheetContent className="w-full sm:max-w-xl flex flex-col gap-0 p-0 border-l-0 shadow-2xl">
         <SheetHeader className="p-6 border-b bg-slate-50 shrink-0">
           <div className="flex justify-between items-center pr-6">
             <SheetTitle className="text-xl text-primary">
@@ -102,8 +99,9 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
         </SheetHeader>
         <Tabs defaultValue="details" className="flex-1 flex flex-col min-h-0">
           <div className="px-6 pt-4 shrink-0">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="items">Itens</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
           </div>
@@ -139,13 +137,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                     <Label>Status</Label>
                     {diffDays !== null && (
                       <span
-                        className={`text-xs font-semibold ${
-                          diffDays < 0
-                            ? 'text-destructive'
-                            : diffDays === 0
-                              ? 'text-amber-600'
-                              : 'text-slate-500'
-                        }`}
+                        className={`text-xs font-semibold ${diffDays < 0 ? 'text-destructive' : diffDays === 0 ? 'text-amber-600' : 'text-slate-500'}`}
                       >
                         {diffDays < 0
                           ? `Vencido (${Math.abs(diffDays)}d)`
@@ -209,9 +201,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                     className={isDuplicateId ? 'border-red-500 focus-visible:ring-red-500' : ''}
                   />
                   {isDuplicateId && (
-                    <p className="text-xs text-red-500 font-medium">
-                      Este ID já existe no sistema. Por favor, utilize uma numeração diferente.
-                    </p>
+                    <p className="text-xs text-red-500 font-medium">ID duplicado.</p>
                   )}
                 </div>
               </div>
@@ -227,7 +217,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                 </div>
                 <div className="space-y-2">
                   <Label>
-                    Data de Entrega Prometida{' '}
+                    Data Prometida{' '}
                     {currentUser.current_role === 'comprador' && (
                       <span className="text-red-500">*</span>
                     )}
@@ -266,6 +256,9 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
               <Button onClick={handleSave}>Salvar Alterações</Button>
             </div>
           </TabsContent>
+          <TabsContent value="items" className="flex-1 overflow-hidden m-0">
+            <RequestItemsTab requestId={req.id} />
+          </TabsContent>
           <TabsContent value="history" className="flex-1 overflow-hidden m-0">
             <ScrollArea className="h-full p-6">
               {requestLogs.length === 0 ? (
@@ -282,9 +275,7 @@ export function RequestDrawer({ requestId, onClose }: RequestDrawerProps) {
                         {new Date(log.changed_at).toLocaleString('pt-BR')}
                       </p>
                       <p className="text-sm mt-1 bg-slate-50 p-2 rounded border border-slate-100">
-                        Alterou <span className="font-semibold">{log.field}</span> de{' '}
-                        <span className="line-through opacity-70">{log.old_value || 'vazio'}</span>{' '}
-                        para{' '}
+                        Alterou <span className="font-semibold">{log.field}</span> para{' '}
                         <span className="font-semibold text-primary">
                           {log.new_value || 'vazio'}
                         </span>

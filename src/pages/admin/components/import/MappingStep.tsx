@@ -8,7 +8,9 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { SYSTEM_FIELDS } from './constants'
+import { ERP_ITEM_FIELDS } from '@/constants/erp-fields'
 import useAppStore from '@/stores/useAppStore'
 import { toast } from 'sonner'
 
@@ -20,6 +22,8 @@ interface MappingStepProps {
   onCancel: () => void
   onConfirm: (groups: any[]) => void
 }
+
+const ALL_FIELDS = [...SYSTEM_FIELDS, ...ERP_ITEM_FIELDS]
 
 export function MappingStep({
   headers,
@@ -77,13 +81,29 @@ export function MappingStep({
         const mat = materials.find(
           (m: any) => m.custom_code === String(matCode).trim() || m.id === String(matCode).trim(),
         )
-        mapData.get(reqNumber).items.push({
+
+        const itemPayload: any = {
           material_id: mat ? mat.id : String(matCode).trim(),
           material_code: mat ? mat.custom_code || mat.id : String(matCode).trim(),
           quantity: Number(qty) || 1,
           accepted: !isDuplicate,
           rowIndex: index + 2,
+        }
+
+        ERP_ITEM_FIELDS.forEach((f) => {
+          const mappedKey = mapping[f.id]
+          if (mappedKey && row[mappedKey] !== undefined && row[mappedKey] !== '') {
+            let val = row[mappedKey]
+            if (f.type === 'numeric') {
+              if (typeof val === 'string') val = Number(val.replace(/\./g, '').replace(',', '.'))
+              itemPayload[f.id] = isNaN(val as number) ? 0 : val
+            } else {
+              itemPayload[f.id] = String(val).trim()
+            }
+          }
         })
+
+        mapData.get(reqNumber).items.push(itemPayload)
       }
     })
 
@@ -97,17 +117,20 @@ export function MappingStep({
   }
 
   return (
-    <Card>
-      <CardHeader className="border-b bg-slate-50/50">
+    <Card className="flex flex-col max-h-[85vh]">
+      <CardHeader className="border-b bg-slate-50/50 shrink-0">
         <CardTitle>Mapeamento de Colunas</CardTitle>
-        <CardDescription>Vincule as colunas da planilha aos campos do sistema.</CardDescription>
+        <CardDescription>
+          Vincule as colunas da planilha aos campos do sistema e do ERP.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {SYSTEM_FIELDS.map((f) => (
+      <ScrollArea className="flex-1 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-6">
+          {ALL_FIELDS.map((f) => (
             <div key={f.id} className="space-y-2">
-              <Label className="flex items-center text-sm font-medium">
-                {f.label} {f.required && <span className="text-red-500 ml-1">*</span>}
+              <Label className="flex items-center text-sm font-medium text-slate-700">
+                {f.label}{' '}
+                {'required' in f && f.required && <span className="text-red-500 ml-1">*</span>}
               </Label>
               <Select
                 value={mapping[f.id] || ''}
@@ -132,13 +155,13 @@ export function MappingStep({
             </div>
           ))}
         </div>
-        <div className="mt-8 pt-6 border-t flex justify-end gap-3">
-          <Button variant="outline" onClick={onCancel}>
-            Cancelar
-          </Button>
-          <Button onClick={handleGroup}>Continuar para Revisão</Button>
-        </div>
-      </CardContent>
+      </ScrollArea>
+      <div className="p-6 border-t bg-slate-50/50 flex justify-end gap-3 shrink-0">
+        <Button variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button onClick={handleGroup}>Continuar para Revisão</Button>
+      </div>
     </Card>
   )
 }

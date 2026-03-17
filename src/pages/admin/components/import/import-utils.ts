@@ -33,11 +33,19 @@ export async function processImport(groupsToImport: any[]) {
       continue
     }
 
-    const itemsPayload = itemsToImport.map((i: any) => ({
-      purchase_request_id: reqData.id,
-      material_id: i.material_id,
-      quantity: i.quantity,
-    }))
+    const itemsPayload = itemsToImport.map((i: any) => {
+      const item: any = {
+        purchase_request_id: reqData.id,
+        material_id: i.material_id,
+        quantity: i.quantity,
+      }
+      Object.keys(i).forEach((k) => {
+        if (!['material_id', 'material_code', 'quantity', 'accepted', 'rowIndex'].includes(k)) {
+          item[k] = i[k]
+        }
+      })
+      return item
+    })
 
     if (itemsPayload.length > 0) {
       const { error: itemsError } = await supabase

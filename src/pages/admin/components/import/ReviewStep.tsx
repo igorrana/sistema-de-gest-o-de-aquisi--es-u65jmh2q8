@@ -19,6 +19,7 @@ import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { processImport } from './import-utils'
 import useAppStore from '@/stores/useAppStore'
+import { ItemERPDetails } from '@/components/ItemERPDetails'
 
 interface ReviewStepProps {
   groups: any[]
@@ -57,10 +58,7 @@ export function ReviewStep({ groups, setGroups, onBack, onSuccess }: ReviewStepP
 
   const handleImport = async () => {
     const groupsToImport = groups.filter((g: any) => g.accepted && !g.isDuplicate)
-    if (groupsToImport.length === 0) {
-      toast.error('Nenhuma solicitação válida e aceita para importar.')
-      return
-    }
+    if (groupsToImport.length === 0) return toast.error('Nenhuma solicitação válida para importar.')
 
     setIsImporting(true)
     try {
@@ -79,7 +77,7 @@ export function ReviewStep({ groups, setGroups, onBack, onSuccess }: ReviewStepP
       <div className="flex justify-between items-center bg-white p-4 rounded-md border shadow-sm sticky top-0 z-10">
         <div>
           <h3 className="text-lg font-bold text-slate-800">Revisão de Importação</h3>
-          <p className="text-sm text-slate-500">Verifique os itens que serão importados.</p>
+          <p className="text-sm text-slate-500">Verifique os itens e dados do ERP.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={onBack} disabled={isImporting}>
@@ -151,9 +149,10 @@ export function ReviewStep({ groups, setGroups, onBack, onSuccess }: ReviewStepP
                 <TableHeader className="bg-white">
                   <TableRow>
                     <TableHead className="w-[50px] text-center">Incs.</TableHead>
-                    <TableHead className="w-[150px]">Cód. Material</TableHead>
+                    <TableHead className="w-[120px]">Cód. Material</TableHead>
                     <TableHead>Material / Serviço</TableHead>
-                    <TableHead className="w-[100px] text-right">Qtd.</TableHead>
+                    <TableHead className="w-[80px] text-right">Qtd.</TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -164,7 +163,7 @@ export function ReviewStep({ groups, setGroups, onBack, onSuccess }: ReviewStepP
                     return (
                       <TableRow
                         key={i.rowIndex}
-                        className={`${!i.accepted ? 'bg-slate-50/50 text-slate-400' : ''}`}
+                        className={`${!i.accepted ? 'bg-slate-50/50 text-slate-400' : 'group'}`}
                       >
                         <TableCell className="text-center">
                           <Checkbox
@@ -184,6 +183,9 @@ export function ReviewStep({ groups, setGroups, onBack, onSuccess }: ReviewStepP
                           )}
                         </TableCell>
                         <TableCell className="text-right font-medium">{i.quantity}</TableCell>
+                        <TableCell className="text-right pr-4">
+                          <ItemERPDetails item={i} />
+                        </TableCell>
                       </TableRow>
                     )
                   })}
