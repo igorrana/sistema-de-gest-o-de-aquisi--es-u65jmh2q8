@@ -50,3 +50,23 @@ export async function processImport(groupsToImport: any[]) {
   }
   return importedCount
 }
+
+export async function processProductsImport(products: any[]) {
+  const payload = products.map((p) => {
+    const price = p.unit_price ? parseFloat(String(p.unit_price).replace(',', '.')) : null
+    return {
+      name: p.name,
+      sku: p.sku || null,
+      description: p.description || null,
+      category: p.category || null,
+      unit_price: isNaN(price as number) ? null : price,
+    }
+  })
+
+  const { data, error } = await supabase.from('products').insert(payload).select('id')
+  if (error) {
+    console.error('Error importing products:', error)
+    throw error
+  }
+  return data?.length || 0
+}

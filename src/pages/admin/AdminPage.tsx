@@ -7,6 +7,7 @@ import { ProjectsTab } from './components/ProjectsTab'
 import { RequestTypesTab } from './components/RequestTypesTab'
 import { UsersRolesTab } from './components/UsersRolesTab'
 import { MaterialsTab } from './components/MaterialsTab'
+import { ProductsTab } from './components/ProductsTab'
 import { RequestDrawer } from '@/components/RequestDrawer'
 
 export default function AdminPage() {
@@ -21,6 +22,7 @@ export default function AdminPage() {
           <TabsTrigger value="projects">Projetos</TabsTrigger>
           <TabsTrigger value="reqTypes">Tipos de Solicitação</TabsTrigger>
           <TabsTrigger value="materials">Materiais</TabsTrigger>
+          <TabsTrigger value="products">Produtos</TabsTrigger>
           <TabsTrigger value="users">Usuários e Perfis</TabsTrigger>
           <TabsTrigger value="perms">Permissões</TabsTrigger>
           <TabsTrigger value="import">Importação</TabsTrigger>
@@ -36,6 +38,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="materials" className="mt-0">
           <MaterialsTab />
+        </TabsContent>
+        <TabsContent value="products" className="mt-0">
+          <ProductsTab />
         </TabsContent>
         <TabsContent value="users" className="mt-0">
           <UsersRolesTab />

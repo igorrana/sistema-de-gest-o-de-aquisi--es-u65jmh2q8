@@ -15,3 +15,13 @@ export const SYSTEM_FIELDS = [
   { id: 'board', label: 'Quadro (Board)', required: false },
   { id: 'order_number', label: 'Número do Pedido', required: false },
 ]
+
+export const REQUEST_FIELDS = SYSTEM_FIELDS
+
+export const PRODUCT_FIELDS = [
+  { id: 'name', label: 'Nome do Produto', required: true },
+  { id: 'sku', label: 'SKU (Código Único)', required: false },
+  { id: 'description', label: 'Descrição', required: false },
+  { id: 'category', label: 'Categoria', required: false },
+  { id: 'unit_price', label: 'Preço Unitário', required: false },
+]

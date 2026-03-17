@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from './AppSidebar'
 import { Header } from './Header'
+import { AIAssistant } from './AIAssistant'
 import useAuthStore from '@/stores/useAuthStore'
 
 export default function Layout() {
@@ -21,6 +22,7 @@ export default function Layout() {
             <Outlet />
           </main>
         </div>
+        <AIAssistant />
       </div>
     </SidebarProvider>
   )

@@ -4,13 +4,14 @@ import { Input } from '@/components/ui/input'
 import { FileSpreadsheet, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { parseCSV, parseExcelFile } from '@/lib/file-parser'
-import { SYSTEM_FIELDS } from './constants'
+import { REQUEST_FIELDS, PRODUCT_FIELDS } from './constants'
 
 interface UploadStepProps {
+  importType?: 'requests' | 'products'
   onUploadSuccess: (headers: string[], data: any[], mapping: Record<string, string>) => void
 }
 
-export function UploadStep({ onUploadSuccess }: UploadStepProps) {
+export function UploadStep({ importType = 'requests', onUploadSuccess }: UploadStepProps) {
   const [isParsing, setIsParsing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -50,9 +51,11 @@ export function UploadStep({ onUploadSuccess }: UploadStepProps) {
       }
 
       const autoMap: Record<string, string> = {}
+      const fields = importType === 'requests' ? REQUEST_FIELDS : PRODUCT_FIELDS
+
       parsedHeaders.forEach((h) => {
         const lowerH = h.toLowerCase()
-        SYSTEM_FIELDS.forEach((sf) => {
+        fields.forEach((sf) => {
           const lowerL = sf.label.toLowerCase()
           if (
             lowerH.includes(sf.id.replace('_', ' ')) ||
@@ -62,10 +65,18 @@ export function UploadStep({ onUploadSuccess }: UploadStepProps) {
             if (!autoMap[sf.id]) autoMap[sf.id] = h
           }
         })
-        if (lowerH.includes('id') || lowerH.includes('solicita')) autoMap['request_number'] = h
-        if (lowerH.includes('descri')) autoMap['description'] = h
-        if (lowerH.includes('material') || lowerH.includes('cód')) autoMap['material_id'] = h
-        if (lowerH.includes('quant') || lowerH.includes('qtd')) autoMap['quantity'] = h
+
+        if (importType === 'requests') {
+          if (lowerH.includes('id') || lowerH.includes('solicita')) autoMap['request_number'] = h
+          if (lowerH.includes('descri')) autoMap['description'] = h
+          if (lowerH.includes('material') || lowerH.includes('cód')) autoMap['material_id'] = h
+          if (lowerH.includes('quant') || lowerH.includes('qtd')) autoMap['quantity'] = h
+        } else {
+          if (lowerH.includes('nome') || lowerH.includes('name') || lowerH.includes('produto'))
+            autoMap['name'] = h
+          if (lowerH.includes('sku') || lowerH.includes('código')) autoMap['sku'] = h
+          if (lowerH.includes('preço') || lowerH.includes('valor')) autoMap['unit_price'] = h
+        }
       })
 
       onUploadSuccess(parsedHeaders, parsedData, autoMap)
@@ -89,8 +100,9 @@ export function UploadStep({ onUploadSuccess }: UploadStepProps) {
         </div>
         <h3 className="text-xl font-semibold mb-2">Importar planilha (Excel ou CSV)</h3>
         <p className="text-sm text-muted-foreground mb-8 max-w-md">
-          Selecione um arquivo .xlsx, .xls ou .csv contendo as solicitações. O sistema identificará
-          automaticamente solicitações com múltiplos itens.
+          {importType === 'requests'
+            ? 'Selecione um arquivo .xlsx, .xls ou .csv contendo as solicitações. O sistema identificará automaticamente solicitações com múltiplos itens.'
+            : 'Selecione um arquivo .xlsx, .xls ou .csv contendo os dados dos produtos para cadastro em lote.'}
         </p>
         <Input
           type="file"
