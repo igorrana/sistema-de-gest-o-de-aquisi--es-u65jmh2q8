@@ -14,10 +14,12 @@ import useAuthStore from '@/stores/useAuthStore'
 import useAppStore from '@/stores/useAppStore'
 import { useNavigate } from 'react-router-dom'
 import { Role } from '@/types'
+import { useSettings } from '@/contexts/SettingsContext'
 
 export function Header() {
   const { currentUser, updateViewPreference, switchRole } = useAuthStore()
   const { globalSearch, setGlobalSearch } = useAppStore()
+  const { settings } = useSettings()
   const navigate = useNavigate()
 
   const handleRoleSwitch = (role: Role) => {
@@ -29,6 +31,19 @@ export function Header() {
     <header className="h-16 border-b bg-white flex items-center justify-between px-4 shrink-0 shadow-sm z-10">
       <div className="flex items-center gap-4 flex-1">
         <SidebarTrigger />
+        <div className="flex items-center border-r pr-4 mr-2">
+          {settings?.logo_url ? (
+            <img
+              src={settings.logo_url}
+              alt="Logo"
+              className="h-8 max-w-[120px] object-contain hidden sm:block"
+            />
+          ) : (
+            <div className="font-bold text-primary hidden sm:block truncate max-w-[150px]">
+              {settings?.trade_name || settings?.company_name || 'Sistema'}
+            </div>
+          )}
+        </div>
         <div className="relative w-full max-w-md hidden md:block">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

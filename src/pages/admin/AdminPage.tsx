@@ -8,6 +8,7 @@ import { RequestTypesTab } from './components/RequestTypesTab'
 import { UsersRolesTab } from './components/UsersRolesTab'
 import { MaterialsTab } from './components/MaterialsTab'
 import { ProductsTab } from './components/ProductsTab'
+import { SettingsTab } from './components/SettingsTab'
 import { RequestDrawer } from '@/components/RequestDrawer'
 
 export default function AdminPage() {
@@ -26,6 +27,7 @@ export default function AdminPage() {
           <TabsTrigger value="users">Usuários e Perfis</TabsTrigger>
           <TabsTrigger value="perms">Permissões</TabsTrigger>
           <TabsTrigger value="import">Importação</TabsTrigger>
+          <TabsTrigger value="settings">Configurações</TabsTrigger>
         </TabsList>
         <TabsContent value="db" className="flex-1 mt-0 m-0 min-h-0">
           <DatabaseTab onRowClick={setSelectedReq} />
@@ -50,6 +52,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="import" className="mt-0">
           <ImportTab />
+        </TabsContent>
+        <TabsContent value="settings" className="mt-0">
+          <SettingsTab />
         </TabsContent>
       </Tabs>
       <RequestDrawer requestId={selectedReq} onClose={() => setSelectedReq(null)} />
